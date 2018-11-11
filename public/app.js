@@ -1,5 +1,4 @@
-$(document).ready( () => {
-  $.getJSON("/articles", (data) => {
+$.getJSON("/articles", (data) => {
     // For each one
     for (var i = 0; i < data.length; i++) {
       // Display the apropos information on the page
@@ -47,5 +46,3 @@ $(document).ready( () => {
     })
     res.render(data.empty());
   });
-
-});
