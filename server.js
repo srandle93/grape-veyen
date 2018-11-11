@@ -20,7 +20,7 @@ mongoose.connect("mongodb://localhost/articleList", { useNewUrlParser: true });
 
 
 app.get("/", (req, res) => {
-    res.sendFile("/public/index.html");
+    res.sendFile(path.join(__dirname, "/public/index.html"));
   });
 
 app.get("/scrape", (req, res) => {
