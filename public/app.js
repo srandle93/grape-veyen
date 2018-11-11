@@ -1,4 +1,4 @@
-$.getJSON("/articles", data => {
+const data = ("/articles", data => {
   // For each one
   for (var i = 0; i < data.length; i++) {
     // Display the apropos information on the page
