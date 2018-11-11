@@ -2,57 +2,79 @@
 // and what you've learned in class so far, scrape a website
 // of your choice, save information from the page in a result array, and log it to the console.
 const express = require("express");
-const cheerio = require("cheerio");
-const axios = require("axios");
 const exhb = require("express-handlebars");
 const mongoose = require("mongoose");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
-const app = require('./public/app');
+
+const db = require('./public/app');
 const PORT = process.env.PORT || 3000;
+const app = express();
 
-// Middleware
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
+
+mongoose.connect("mongodb://localhost/articleList", { useNewUrlParser: true });
+
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "/public/index.html"));
   });
-// app.get("/", function(req, res) {
-//     res.send(app);
-//   });
-// Make a request via axios to grab the HTML body from the site of your choice
-axios.get("https://www.msn.com")
-.then((response) => {
 
-  // Load the HTML into cheerio and save it to a variable
-  // '$' becomes a shorthand for cheerio's selector commands, much like jQuery's '$'
-  const $ = cheerio.load(response.data);
+app.get("/scrape", (req, res) => {
+  axios.get("https://www.msn.com")
+  .then((response) => {
+    const $ = cheerio.load(response.data);
+    const results = [];
+    $("article h2").each((i, element) => {
+      const title = $(element).children("a").text();
+      const link = $(element).find("a").attr("href");
+      
+      results.push({
+        title: title,
+        link: link
+      });
 
-  // An empty array to save the data that we'll scrape
-  const results = [];
-
-  // Select each element in the HTML body from which you want information.
-  // NOTE: Cheerio selectors function similarly to jQuery's selectors,
-  // but be sure to visit the package's npm page to see how it works
-  $("title").each((i, element) => {
-
-    const title = $(element).children().text();
-    const link = $(element).find("a").attr("href");
-
-    // Save these results in an object that we'll push into the results array we defined earlier
-    results.push({
-      title: title,
-      link: link
+      db.Article.create(results)
+      .then(dbArticle => {
+        console.log(dbArticle);
+      });
     });
-  });
-
-  // Log the results once you've looped through each of the elements found with cheerio
+  res.render(results);
   console.log(results);
+  });
 });
 
-// Listen on port 3000
+app.get("/articles", (req, res) => {
+  db.Article.find({})
+  .then(dbArticle => {
+    res.json(dbArticle);
+  })
+});
+
+app.get("/articles/:id", (req, res) => {
+  db.Article.findOne({ _id: req.params.id })
+    .then(dbArticle => {
+      res.json(dbArticle);
+    });
+});
+
+app.post("/articles/:id", (req, res) => {
+  // Create a new note and pass the req.body to the entry
+  db.Article.find(req.body)
+    .then(dbArticle => {
+      return db.Article.Update({ _id: req.params.id })
+    })
+    .then(function(dbArticle) {
+      res.render("/saved");
+    })
+});
+app.get("/saved", (req, res) => {
+  res.send(saved);
+});
+
 app.listen(PORT, () => {
     console.log("App running on port 3000!");
   });
-
